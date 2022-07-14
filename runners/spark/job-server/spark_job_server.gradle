@@ -102,7 +102,7 @@ def portableValidatesRunnerTask(String name, boolean streaming, boolean docker, 
   } else {
     if (streaming) {
       pipelineOptions += "--streaming"
-      pipelineOptions += "--streamingTimeoutMs=30000"
+      pipelineOptions += "--streamingTimeoutMs=60000"
 
       testCategories = {
         includeCategories 'org.apache.beam.sdk.testing.ValidatesRunner'
@@ -204,7 +204,7 @@ def portableValidatesRunnerTask(String name, boolean streaming, boolean docker, 
           jobServerDriver: "org.apache.beam.runners.spark.SparkJobServerDriver",
           jobServerConfig: "--job-host=localhost,--job-port=0,--artifact-port=0,--expansion-port=0",
           testClasspathConfiguration: configurations.validatesPortableRunner,
-          numParallelTests: 4,
+          numParallelTests: 10,
           pipelineOpts: pipelineOptions,
           environment: docker ? BeamModulePlugin.PortableValidatesRunnerConfiguration.Environment.DOCKER : BeamModulePlugin.PortableValidatesRunnerConfiguration.Environment.EMBEDDED,
           systemProperties: [
