@@ -32,22 +32,20 @@ package org.apache.beam.gradle
  *    and unit and integration tests in a PR (e.g. https://github.com/apache/beam/pull/16460,
  *    https://github.com/apache/beam/pull/16459)
  */
-class GrpcVendoring_1_43_2 {
-  static def grpc_version = "1.43.2"
+class GrpcVendoring_1_48_1 {
+  static def grpc_version = "1.48.1"
 
-  // See https://github.com/grpc/grpc-java/blob/v1.43.2/build.gradle
-  // or https://search.maven.org/search?q=g:io.grpc%201.43.2
-  static def guava_version = "30.1.1-jre"
-  static def protobuf_version = "3.19.2"
-  static def gson_version = "2.8.9"
-  static def google_auth_version = "0.22.2"
+  // See https://github.com/grpc/grpc-java/blob/v1.48.1/gradle/libs.versions.toml
+  // or https://search.maven.org/search?q=g:io.grpc%201.48.1
+  static def guava_version = "31.1-jre"
+  static def protobuf_version = "3.21.1"
+  static def gson_version = "2.9.0"
+  static def google_auth_version = "1.4.0"
   static def opencensus_version = "0.31.0"
-  static def conscrypt_version = "2.5.1"
-  static def proto_google_common_protos_version = "2.0.1"
-
-  // tcnative version from https://github.com/grpc/grpc-java/blob/master/SECURITY.md#netty
-  static def netty_version = "4.1.63.Final"
-  static def netty_tcnative_version = "2.0.38.Final"
+  static def conscrypt_version = "2.5.2"
+  static def proto_google_common_protos_version = "2.9.0"
+  static def netty_version = "4.1.77.Final"
+  static def netty_tcnative_version = "2.0.53.Final"
 
   /** Returns the list of implementation time dependencies. */
   static List<String> dependencies() {
@@ -80,7 +78,7 @@ class GrpcVendoring_1_43_2 {
    */
   static List<String> runtimeDependencies() {
     return [
-      'com.google.errorprone:error_prone_annotations:2.9.0',
+      'com.google.errorprone:error_prone_annotations:2.14.0',
       // TODO(BEAM-9288): Enable relocation for conscrypt
       "org.conscrypt:conscrypt-openjdk-uber:$conscrypt_version"
     ]
@@ -110,7 +108,7 @@ class GrpcVendoring_1_43_2 {
     // those libraries may provide. The 'validateShadedJarDoesntLeakNonOrgApacheBeamClasses'
     // ensures that there are no classes outside of the 'org.apache.beam' namespace.
 
-    String version = "v1p43p2";
+    String version = "v1p48p1";
     String prefix = "org.apache.beam.vendor.grpc.${version}";
     List<String> packagesToRelocate = [
       // guava uses the com.google.common and com.google.thirdparty package namespaces
