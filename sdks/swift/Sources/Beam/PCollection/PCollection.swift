@@ -43,7 +43,7 @@ extension PValueWritable where Self.Writer == Self {
 enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWritable {
     case done
     case consume(_ receiver: (Value,Int64,Window) -> Void)
-    case value(_ value: Value,timestamp: Int64, window: Window)
+    case element(_ value: Value,timestamp: Int64 = 0, window: Window = .global)
 
     var value: Value { 
         get {
@@ -52,7 +52,7 @@ enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWrit
                     fatalError()
                 case .consume:
                     fatalError()
-                case let .value(value,_,_):
+                case let .element(value,_,_):
                     return value
             }
         }
@@ -65,7 +65,7 @@ enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWrit
                     fatalError()
                 case .consume:
                     fatalError()
-                case let .value(_,timestamp,_):
+                case let .element(_,timestamp,_):
                     return timestamp
             }
         }
@@ -78,7 +78,7 @@ enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWrit
                     fatalError()
                 case .consume:
                     fatalError()
-                case let .value(_,_,window):
+                case let .element(_,_,window):
                     return window
             }
         }
@@ -90,7 +90,7 @@ enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWrit
                 fatalError()
             case let .consume(receiver):
                 receiver(value,timestamp,window)
-            case .value:
+            case .element:
                 fatalError()
         }
     }

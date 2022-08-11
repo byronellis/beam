@@ -21,7 +21,7 @@ public struct Metric<V> where V : MetricProtocol {
 
 public struct CounterMetric : MetricProtocol {
 
-    public typealias MetricType = (String,Int64)
+    public typealias MetricType = MetricRecord
 
 
     private let name: String
@@ -34,7 +34,7 @@ public struct CounterMetric : MetricProtocol {
     }
 
     public func increment(_ value: Int64 = 1) {
-        output((name,value),0,.global)
+        output(.init(name:name,value:value),0,.global)
     }
 
 }
