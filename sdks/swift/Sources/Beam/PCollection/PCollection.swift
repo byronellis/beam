@@ -1,98 +1,42 @@
-public protocol PValueReader<Value> {
-    associatedtype Value
+public protocol PInput<Element> {
+    associatedtype Element
 
-    var value: Value { get }
-    var timestamp: Int64 { get }
-    var window: Window { get }
-
-}
-public protocol PValueReadable<Value> {
-    associatedtype Value
-    associatedtype Reader : PValueReader where Reader.Value == Value
-    func makeReader() -> Reader
-}
-extension PValueReadable where Self : PValueReader {
-    public typealias _Default_Reader = Self
-}
-extension PValueReadable where  Self.Reader == Self {
-    @inlinable public func makeReader() -> Self {
-        self
-    }
-}
-public protocol PValueWriter<Value> {
-    associatedtype Value
-
-    func output(_ value: Value,timestamp: Int64,window: Window)
+    var element: Element { mutating get }
 }
 
-public protocol PValueWritable<Value> {
-    associatedtype Value
-    associatedtype Writer : PValueReader where Writer.Value == Value
+public protocol POutput<Element> {
+    associatedtype Element
 
-    func makeWriter() -> Writer
-}
-extension PValueWritable where Self : PValueWriter {
-    public typealias _Default_Writer = Self
-}
-extension PValueWritable where Self.Writer == Self {
-    @inlinable public func makeWriter() -> Self {
-        self
-    }
+    mutating func emit(_ element: Element)
 }
 
-enum PCollection<Value> : PValueReader, PValueReadable, PValueWriter, PValueWritable {
-    case done
-    case consume(_ receiver: (Value,Int64,Window) -> Void)
-    case element(_ value: Value,timestamp: Int64 = 0, window: Window = .global)
+typealias PValue = PInput & POutput
 
-    var value: Value { 
+public enum PCollection<Element> : PValue {
+
+    case emit(Element)
+    case receive((Element) -> ())
+
+    public var element: Element {
         get {
             switch self {
-                case .done:
+                case .emit(let e):
+                    return e
+                case .receive:
                     fatalError()
-                case .consume:
-                    fatalError()
-                case let .element(value,_,_):
-                    return value
             }
+            
         }
     }
 
-    var timestamp: Int64 {
-        get {
-            switch self {
-                case .done:
-                    fatalError()
-                case .consume:
-                    fatalError()
-                case let .element(_,timestamp,_):
-                    return timestamp
-            }
-        }
-    }
-
-    var window: Window {
-        get {
-            switch self {
-                case .done:
-                    fatalError()
-                case .consume:
-                    fatalError()
-                case let .element(_,_,window):
-                    return window
-            }
-        }
-    }
-
-    func output(_ value: Value, timestamp: Int64, window: Window) {
+    mutating public func emit(_ element: Element) {
         switch self {
-            case .done:
+            case .emit:
                 fatalError()
-            case let .consume(receiver):
-                receiver(value,timestamp,window)
-            case .element:
-                fatalError()
+            case .receive(let fn):
+                fn(element)
         }
     }
 
 }
+
