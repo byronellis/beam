@@ -17,6 +17,7 @@
 ###############################################################################
 
 ARG py_version
+ARG TARGETPLATFORM
 FROM python:"${py_version}"-bullseye as beam
 MAINTAINER "Apache Beam <dev@beam.apache.org>"
 

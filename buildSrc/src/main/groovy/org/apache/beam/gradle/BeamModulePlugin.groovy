@@ -2000,6 +2000,15 @@ class BeamModulePlugin implements Plugin<Project> {
             executable 'sh'
             args '-c', "${project.ext.goCmd} build -o "+ ext.outputLocation + ' ' + ext.goTargets
           }
+          project.exec {
+            // Certainly a hacky way of getting aarch64 support, but we are already hacking amd64
+            // support for Go builds above
+            environment "GOOS", "linux"
+            environment "GOARCH", "arm64"
+
+            executable 'sh'
+            args '-c', "${project.ext.goCmd} build -o "+ ext.outputLocation + ' ' + ext.goTargets
+          }
         }
       }
 

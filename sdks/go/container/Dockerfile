@@ -20,6 +20,7 @@ FROM debian:bullseye
 MAINTAINER "Apache Beam <dev@beam.apache.org>"
 
 ARG pull_licenses
+ARG TARGETPLATFORM
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
