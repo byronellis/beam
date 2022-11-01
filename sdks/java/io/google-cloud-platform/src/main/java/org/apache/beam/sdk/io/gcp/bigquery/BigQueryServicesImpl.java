@@ -1152,6 +1152,7 @@ class BigQueryServicesImpl implements BigQueryServices {
                       sleeper)));
           strideIndices.add(strideIndex);
           retTotalDataSize += dataSize;
+          rows = new ArrayList<>();
         }
 
         try {
@@ -1205,8 +1206,14 @@ class BigQueryServicesImpl implements BigQueryServices {
         }
         rowsToPublish = retryRows;
         idsToPublish = retryIds;
+        // print first 5 failures
+        int numErrorToLog = Math.min(allErrors.size(), 5);
+        LOG.info(
+            "Retrying {} failed inserts to BigQuery. First {} fails: {}",
+            rowsToPublish.size(),
+            numErrorToLog,
+            allErrors.subList(0, numErrorToLog));
         allErrors.clear();
-        LOG.info("Retrying {} failed inserts to BigQuery", rowsToPublish.size());
       }
       if (successfulRows != null) {
         for (int i = 0; i < rowsToPublish.size(); i++) {
@@ -1301,8 +1308,8 @@ class BigQueryServicesImpl implements BigQueryServices {
     }
 
     @Override
-    public StreamAppendClient getStreamAppendClient(String streamName, Descriptor descriptor)
-        throws Exception {
+    public StreamAppendClient getStreamAppendClient(
+        String streamName, Descriptor descriptor, boolean useConnectionPool) throws Exception {
       ProtoSchema protoSchema =
           ProtoSchema.newBuilder().setProtoDescriptor(descriptor.toProto()).build();
 
@@ -1318,6 +1325,7 @@ class BigQueryServicesImpl implements BigQueryServices {
           StreamWriter.newBuilder(streamName)
               .setWriterSchema(protoSchema)
               .setChannelProvider(transportChannelProvider)
+              .setEnableConnectionPool(useConnectionPool)
               .setTraceId(
                   "Dataflow:"
                       + (bqIOMetadata.getBeamJobId() != null
