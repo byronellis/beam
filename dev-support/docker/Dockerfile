@@ -41,13 +41,24 @@ ENV DEBCONF_TERSE true
 # Update and install common packages
 ###
 RUN apt -q update \
-   && apt install -y software-properties-common apt-utils apt-transport-https ca-certificates \
+   && apt install -y software-properties-common apt-utils apt-transport-https ca-certificates curl gnupg lsb-release \
    && add-apt-repository -y ppa:deadsnakes/ppa \
    && apt -q update
+
+###
+# Add the docker repositories
+## 
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt -q update
 
 RUN mkdir /package
 COPY pkglist /package/pkglist
 RUN apt-get -q install -y --no-install-recommends $(grep -v '^#' /package/pkglist | cat)
+
 
 ###
 # Set the locale ( see https://stackoverflow.com/a/28406007/114196 )

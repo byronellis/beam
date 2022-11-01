@@ -2038,7 +2038,7 @@ class BeamModulePlugin implements Plugin<Project> {
     }
 
     project.ext.applyDockerRunNature = {
-      project.apply plugin: "com.palantir.docker-run"
+      project.apply plugin: "com.palantir.docker"
     }
     /** ***********************************************************************************************/
 

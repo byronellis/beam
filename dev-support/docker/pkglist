@@ -18,7 +18,10 @@ build-essential
 bzip2
 wget
 curl
-docker.io
+docker-ce
+docker-ce-cli
+containerd.io
+docker-compose-plugin
 g++
 gcc
 git
@@ -48,4 +51,4 @@ python3.9-dev
 python3.9-distutils
 python3.9-venv
 tox
-docker.io
+

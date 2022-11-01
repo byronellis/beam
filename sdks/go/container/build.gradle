@@ -36,6 +36,8 @@ docker {
   // tags used by dockerTag task
   tags containerImageTags()
   files "./build/"
+  buildx true
+  platform 'linux/amd64,linux/arm64'
   buildArgs(['pull_licenses': project.rootProject.hasProperty(["docker-pull-licenses"]) ||
                      project.rootProject.hasProperty(["isRelease"])])
 }
