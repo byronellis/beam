@@ -1,0 +1,12 @@
+PCollections:
+  - inputA
+  - inputB
+Pipeline:
+  - Flatten:
+      inputs:
+        - inputA
+        - inputB
+    - Count:
+        type: perKey
+    - Top: {largest: 10 }
+
