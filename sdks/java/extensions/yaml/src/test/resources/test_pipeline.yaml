@@ -1,12 +1,19 @@
-PCollections:
-  - inputA
-  - inputB
+Transforms:
+  Select:
+    className: org.apache.beam.sdk.schema.transforms.Select
+  DropFields:
+    className: org.apache.beam.sdk.schema.transforms.DropFields
 Pipeline:
-  - Flatten:
-      inputs:
-        - inputA
-        - inputB
-    - Count:
-        type: perKey
-    - Top: {largest: 10 }
-
+  - PCollection:
+      name: inputA
+      apply:
+        - Impulse:
+        - TextIO:
+            - filePath: "%filepath"
+        - Select:
+            fields: ["item_id"]
+  - PCollection:
+      name: inputB
+      apply:
+        - Select:
+            fields: ["item_id"]
