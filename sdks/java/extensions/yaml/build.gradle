@@ -25,8 +25,9 @@ def snakeyaml_version = "1.30"
 dependencies {
     implementation enforcedPlatform(library.java.google_cloud_platform_libraries_bom)
 
-    implementation library.java.vendored_guava_26_0_jre
+/*    implementation library.java.vendored_guava_26_0_jre */
     implementation project(path: ":sdks:java:core", configuration: "shadow")
+    implementation project(":sdks:java:extensions:sql")
     implementation "org.yaml:snakeyaml:$snakeyaml_version"
     testImplementation library.java.junit
     testImplementation library.java.hamcrest

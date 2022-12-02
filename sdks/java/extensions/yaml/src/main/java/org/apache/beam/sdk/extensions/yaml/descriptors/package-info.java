@@ -15,25 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.beam.sdk.extensions.yaml;
 
-import java.io.IOException;
-import java.io.InputStream;
-import org.apache.beam.sdk.testing.TestPipeline;
-import org.apache.beam.sdk.transforms.Impulse;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-@RunWith(JUnit4.class)
-public class BuiltInTransformTest {
-
-  @Test
-  public void testFlatten() throws IOException {
-    InputStream in = getClass().getClassLoader().getResourceAsStream("test_pipeline.yaml");
-    TestPipeline p = TestPipeline.create();
-    p.apply(Impulse.create()).apply(YAMLTransform.yaml(in));
-    p.run();
-    in.close();
-  }
-}
+/** Metadata related classes. */
+package org.apache.beam.sdk.extensions.yaml.descriptors;

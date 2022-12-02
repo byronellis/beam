@@ -15,25 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.beam.sdk.extensions.yaml;
+package org.apache.beam.sdk.extensions.yaml.descriptors;
 
-import java.io.IOException;
-import java.io.InputStream;
-import org.apache.beam.sdk.testing.TestPipeline;
-import org.apache.beam.sdk.transforms.Impulse;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import java.util.List;
+import org.apache.beam.sdk.schemas.Schema;
+import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
 
-@RunWith(JUnit4.class)
-public class BuiltInTransformTest {
+public class SchemaDescriptor {
 
-  @Test
-  public void testFlatten() throws IOException {
-    InputStream in = getClass().getClassLoader().getResourceAsStream("test_pipeline.yaml");
-    TestPipeline p = TestPipeline.create();
-    p.apply(Impulse.create()).apply(YAMLTransform.yaml(in));
-    p.run();
-    in.close();
+  public String name;
+  public List<FieldDescriptor> fields;
+
+  public Schema toSchema() {
+    Schema.Builder b = Schema.builder();
+    if (fields != null) {
+      for (FieldDescriptor f : fields) {
+        b = f.addToSchema(b);
+      }
+    }
+    return b.build();
+  }
+
+  @Override
+  public String toString() {
+    return toSchema().toString();
+  }
+
+  public static void addTypeDescription(Constructor constructor) {
+    constructor.addTypeDescription(new TypeDescription(SchemaDescriptor.class, new Tag("!schema")));
   }
 }

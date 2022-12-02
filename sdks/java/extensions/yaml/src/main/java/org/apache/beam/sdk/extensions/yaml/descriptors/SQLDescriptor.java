@@ -15,25 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.beam.sdk.extensions.yaml;
+package org.apache.beam.sdk.extensions.yaml.descriptors;
 
-import java.io.IOException;
-import java.io.InputStream;
-import org.apache.beam.sdk.testing.TestPipeline;
-import org.apache.beam.sdk.transforms.Impulse;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.apache.beam.sdk.extensions.sql.SqlTransform;
+import org.apache.beam.sdk.extensions.yaml.YAMLTransform;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PInput;
+import org.apache.beam.sdk.values.Row;
+import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.constructor.Constructor;
 
-@RunWith(JUnit4.class)
-public class BuiltInTransformTest {
+public class SQLDescriptor implements Expansion {
+  public String query;
 
-  @Test
-  public void testFlatten() throws IOException {
-    InputStream in = getClass().getClassLoader().getResourceAsStream("test_pipeline.yaml");
-    TestPipeline p = TestPipeline.create();
-    p.apply(Impulse.create()).apply(YAMLTransform.yaml(in));
-    p.run();
-    in.close();
+  public static void addTypeDescription(Constructor constructor) {
+    constructor.addTypeDescription(new TypeDescription(SQLDescriptor.class, "!sql"));
+  }
+
+  @Override
+  public PCollection<Row> expand(YAMLTransform transform, PInput input) {
+    return SqlTransform.query(query).expand(input);
   }
 }

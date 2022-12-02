@@ -1,19 +1,14 @@
-Transforms:
-  Select:
-    className: org.apache.beam.sdk.schema.transforms.Select
-  DropFields:
-    className: org.apache.beam.sdk.schema.transforms.DropFields
-Pipeline:
-  - PCollection:
-      name: inputA
-      apply:
-        - Impulse:
-        - TextIO:
-            - filePath: "%filepath"
-        - Select:
-            fields: ["item_id"]
-  - PCollection:
-      name: inputB
-      apply:
-        - Select:
-            fields: ["item_id"]
+--- !pcollection
+name: 'kafka_input'
+apply:
+    - !read
+        from: 'kafka'
+        topic: 'my_kafka_topic'
+--- !pipeline
+options:
+    - {name: "input",type: "STRING",description: "Input path"}
+    - {name: "output",type: "STRING",description: "Output path"}
+apply:
+    - pc:kafka_input
+    - !sql
+        query: "SELECT * FROM t WHERE timestamp > NOW()"
