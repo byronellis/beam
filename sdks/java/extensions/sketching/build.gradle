@@ -24,12 +24,14 @@ description = "Apache Beam :: SDKs :: Java :: Extensions :: Sketching"
 
 def streamlib_version = "2.9.5"
 def tdigest_version = "3.2"
+def datasketches_version = "3.3.0"
 
 dependencies {
   implementation library.java.vendored_guava_26_0_jre
   implementation project(path: ":sdks:java:core", configuration: "shadow")
   implementation "com.clearspring.analytics:stream:$streamlib_version"
   implementation "com.tdunning:t-digest:$tdigest_version"
+  implementation "org.apache.datasketches:datasketches-java:$datasketches_version"
   testImplementation library.java.avro
   testImplementation project(path: ":sdks:java:core", configuration: "shadowTest")
   testImplementation library.java.junit
