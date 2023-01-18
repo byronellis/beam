@@ -18,10 +18,25 @@
 package org.apache.beam.sdk.extensions.sketching.sampling;
 
 import org.apache.beam.sdk.transforms.Combine;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.PCollection;
 import org.apache.datasketches.sampling.ReservoirItemsSketch;
 import org.apache.datasketches.sampling.ReservoirItemsUnion;
 
 public final class ReservoirSampling {
+
+  private static class RetrieveSample {
+    private static <InputT> DoFn<ReservoirItemsSketch,InputT> globally() {
+      public void processElement(DoFn.ProcessContext c) {
+        ReservoirItemsSketch element = c.element();
+        for(InputT item : element.getElements()) {
+          c.output(item);
+        }
+      }
+
+    }
+  }
 
   public static class ReserviorSampleFn<InputT>
       extends Combine.CombineFn<
