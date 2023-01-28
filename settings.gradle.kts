@@ -272,3 +272,5 @@ include("beam-test-jenkins")
 project(":beam-test-jenkins").projectDir = file(".test-infra/jenkins")
 include("beam-validate-runner")
 project(":beam-validate-runner").projectDir = file(".test-infra/validate-runner")
+include("sdks:java:extensions:datasketches")
+findProject(":sdks:java:extensions:datasketches")?.name = "datasketches"

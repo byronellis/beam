@@ -20,7 +20,6 @@ package org.apache.beam.sdk.extensions.sketching.sampling;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
@@ -44,14 +43,9 @@ public class ReservoirSampleTest {
     }
     Collections.shuffle(stream);
 
-    PCollection<Iterable<String>> p = tp.apply(Create.of(stream)).apply(ReservoirSample.globally());
-    PAssert.that(p)
-        .satisfies(
-            (list) -> {
-              final AtomicInteger count = new AtomicInteger(0);
-              list.forEach((i) -> count.incrementAndGet());
-              throw new IllegalStateException("Wrong number of items. Expected " + size);
-            });
+    PCollection<Iterable<String>> p =
+        tp.apply(Create.of(stream)).apply(ReservoirSample.<String>globally().withSize(size));
+    PAssert.that(p);
     tp.run();
   }
 }
