@@ -17,4 +17,6 @@
  */
 package org.apache.beam.sdk.extensions.scripting;
 
-public class Script {}
+public class Script {
+
+}

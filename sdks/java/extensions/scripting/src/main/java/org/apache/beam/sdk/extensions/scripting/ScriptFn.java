@@ -17,4 +17,8 @@
  */
 package org.apache.beam.sdk.extensions.scripting;
 
-public class ScriptFn {}
+public class ScriptFn {
+
+
+
+}
