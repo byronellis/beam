@@ -1970,6 +1970,16 @@ class BeamModulePlugin implements Plugin<Project> {
             executable 'sh'
             args '-c', "${project.ext.goCmd} build -o "+ ext.outputLocation + ' ' + ext.goTargets
           }
+          project.exec {
+            // Set these so the substitutions work.
+            // May cause issues for the folks running gradle commands on other architectures
+            // and operating systems.
+            environment "GOOS", "linux"
+            environment "GOARCH", "arm64"
+
+            executable 'sh'
+            args '-c', "${project.ext.goCmd} build -o "+ ext.outputLocation + ' ' + ext.goTargets
+          }
         }
       }
 

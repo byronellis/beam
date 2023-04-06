@@ -29,7 +29,7 @@ public enum PCollection<Element> : PValue {
         }
     }
 
-    mutating public func emit(_ element: Element) {
+    public func emit(_ element: Element) {
         switch self {
             case .emit:
                 fatalError()

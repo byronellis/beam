@@ -1,0 +1,11 @@
+{
+    "invocations":[
+        {
+            "protoFiles":[
+                "/Users/byronellis/Sources/beam/model/pipeline/src/main/proto/org/apache/beam/model/pipeline/v1/beam_runner_api.proto"
+            ],
+            "visbility":"internal",
+            "includes":["../../model/pipeline/src/main/proto/"]
+        }
+    ]
+}
