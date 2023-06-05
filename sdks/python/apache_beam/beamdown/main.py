@@ -1,6 +1,4 @@
 import argparse
-import apache_beam as beam
-from apache_beam.yaml import yaml_transform
 
 def _configure_parser(argv):
   parser = argparse.ArgumentParser()
