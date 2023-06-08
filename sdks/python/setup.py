@@ -152,6 +152,7 @@ dataframe_dependency = [
 ]
 
 
+
 # We must generate protos after setup_requires are installed.
 def generate_protos_first():
   try:
@@ -357,6 +358,7 @@ if __name__ == '__main__':
             'dask >= 2022.6',
             'distributed >= 2022.6',
           ],
+          'beamdown':['markdown>=3.4.3,<4','Jinja2>=3.1.2,<4']
       },
       zip_safe=False,
       # PyPI package information.
