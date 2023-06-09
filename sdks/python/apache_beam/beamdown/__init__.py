@@ -15,6 +15,19 @@ from jinja2 import Template
 
 LOG = logging.getLogger("BEAMDOWN")
 
+class Links:
+    """ Keep track of links between chunks """
+    def __init__(self,links):
+        self.links = links
+
+    def link(self,ref):
+        try:
+            ndx = self.links.index(ref)
+            return "input{}".format(ndx)
+        except:
+            ndx = len(self.links)
+            self.links.append(ref)
+            return "input{}".format(ndx)
 
 class PipelineExtension(markdown.Extension):
     """ Pipeline extension"""
@@ -62,7 +75,7 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
 
     TEMPLATE_MACROS="""
 {% macro ref(chunk_id) -%}
-{{chunk_id}}
+{{ config.inputs.link(chunk_id) }}
 {%- endmacro %}"""
 
 
@@ -121,6 +134,10 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
                     config['hl_lines'] = parse_hl_lines(token[4])
             if not id:
                 id = "chunk{}".format(chunk_count+1)
+            
+            #Convert inputs and outputs
+            config['inputs'] = Links(config.get('inputs',[]))
+
             self.pipeline.add_chunk(id,lang,classes,config,token[1])
             ids.append(id)
             chunk_count = chunk_count + 1
@@ -130,7 +147,11 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
             chunk = self.pipeline.chunk(chunk_id)
             template_text = "{}{}".format(self.TEMPLATE_MACROS,chunk['original_text'])
             template = Template(template_text)
-            final_text = template.render(lang=chunk['lang'],config=chunk['config'],args={},refs=dict())
+
+            final_text = template.render(
+                lang=chunk['lang'],
+                config=chunk['config'],
+                args={})
             LOG.debug("output text {}".format(final_text))
 
 
