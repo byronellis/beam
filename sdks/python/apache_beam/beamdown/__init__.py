@@ -3,6 +3,7 @@
 import logging 
 from textwrap import dedent
 import re
+import yaml
 
 
 import markdown
@@ -10,16 +11,17 @@ from markdown.core import Markdown
 from markdown.extensions.attr_list import get_attrs
 from markdown.extensions.codehilite import parse_hl_lines
 
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Template
 
 LOG = logging.getLogger("BEAMDOWN")
+
 
 class PipelineExtension(markdown.Extension):
     """ Pipeline extension"""
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.chunks = []
+        self.reset()
     
     def extendMarkdown(self, md: Markdown) -> None:
         # Try to make sure this runs before other tree processors like codehilite so we can 
@@ -32,19 +34,37 @@ class PipelineExtension(markdown.Extension):
 
     def reset(self):
         LOG.debug("Resetting pipeline definition")
+        self.chunks = []
+        self.chunk_map = dict()
+
     
     def add_chunk(self,id,lang,classes,config,original_text):
+        self.chunk_map[id] = len(self.chunks)
         self.chunks.append({
-            id: id,
-            lang: lang,
-            classes: classes,
-            config: config,
-            original_text: original_text
+            'id': id,
+            'lang': lang,
+            'classes': classes,
+            'config': config,
+            'original_text': original_text
         })
+
+    def chunk(self,id = None,index = None):
+        if id:
+            return self.chunks[self.chunk_map[id]]
+        else:
+            return self.chunk[index]
+
+
 
 
 class PipelineExtractor(markdown.preprocessors.Preprocessor):
     """ Extract pipelines from the code block elements """
+
+    TEMPLATE_MACROS="""
+{% macro ref(chunk_id) -%}
+{{chunk_id}}
+{%- endmacro %}"""
+
 
     FENCED_BLOCK_RE = re.compile(dedent(r'''
     (?P<fence>^(?:~{3,}|`{3,}))[ ]*                          # opening fence
@@ -106,7 +126,12 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
             chunk_count = chunk_count + 1
 
         # Now assemble pipelines from these chunks
-        
+        for chunk_id in ids:
+            chunk = self.pipeline.chunk(chunk_id)
+            template_text = "{}{}".format(self.TEMPLATE_MACROS,chunk['original_text'])
+            template = Template(template_text)
+            final_text = template.render(lang=chunk['lang'],config=chunk['config'],args={},refs=dict())
+            LOG.debug("output text {}".format(final_text))
 
 
 
