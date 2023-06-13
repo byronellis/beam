@@ -66,6 +66,7 @@ class PipelineExtension(Extension):
         LOG.debug("Resetting pipeline definition")
         self.chunks = []
         self.chunk_map = dict()
+        self.args = {}
 
     
     def add_chunk(self,id,lang,classes,config,original_text):
@@ -172,7 +173,7 @@ class PipelineExtractor(Preprocessor):
             final_text = template.render(
                 lang=chunk['lang'],
                 config=chunk['config'],
-                args={})
+                args=self.pipeline.args)
             chunk['final_text'] = final_text
 
         #Assemble YAML and final_markdown
@@ -236,10 +237,13 @@ class PipelineExtractor(Preprocessor):
 
 
 class Beamdown:
-    def __init__(self):
-        self.md = Markdown(extensions=['extra',PipelineExtension()])
     
-    def convert(self,text):
+    def __init__(self):
+        self.context = PipelineExtension()
+        self.md = Markdown(extensions=['extra',self.context])
+    
+    def convert(self,text,args={}):
+        self.context.args = args
         return self.md.convert(text)
     
     def reset(self):
@@ -254,8 +258,8 @@ class Beamdown:
 
 _beamdown = Beamdown()
 
-def convert(text):
-    return _beamdown.convert(text)
+def convert(text,args={}):
+    return _beamdown.convert(text,args)
 
 def reset():
     _beamdown.reset()
