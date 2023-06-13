@@ -1,6 +1,7 @@
 import argparse
 import sys
 import logging
+import yaml
 
 from apache_beam.beamdown import Beamdown
 
@@ -22,8 +23,12 @@ def run(argv=None):
   beamdown.convert(content)
 #  known_args.outfile.write(beamdown.convert(content))
   known_args.outfile.write("\n")
-  for pipeline in beamdown.pipelines():
-    LOG.debug("{}".format(pipeline))
+  if known_args.mode == "markdown":
+    known_args.outfile.write(beamdown.final_markdown())
+  elif known_args.mode == "yaml":
+    known_args.outfile.write(yaml.dump(beamdown.pipeline()))
+  else:
+    LOG.error("Unrecognized mode: {}".format(known_args.mode))
 
 
 

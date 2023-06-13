@@ -36,11 +36,11 @@ Using the same example as YAML's README.md we define two blocks to read and
 write. Note that we also have access to the Jinja macro language inside of our
 Markdown file, which lets us parameterize our documents easily!
 
-```{.yaml #csv-read}
+```{.yaml .source #csv-read}
 type: ReadFromCsv
 path: {{ args.input_files }}
 ```
-```{.yaml #json-write inputs=#my-first-filter}
+```{.yaml .sink #json-write inputs=my-first-filter}
 type: WriteToJson
 path: {{ args.output_path }}
 ```
@@ -50,13 +50,12 @@ in Beamdown (though you can add even more block types with a planned plugin
 functionality). The first are Python blocks, which help to make writing Python
 more clear.
 
-```{.python type=filter #my-first-filter}
-def fn(x):
-    return x.col3 > 100
+```{.python .filter #my-first-filter}
+lambda x: x.col3 > 100
 ```
 
 We can do the same thing with SQL!
-```{ .sql #my-sql }
+```{.sql #my-sql}
 SELECT col1, COUNT(*) AS cnt FROM {{ ref('my-first-filter') }} GROUP BY col1
 ```
 

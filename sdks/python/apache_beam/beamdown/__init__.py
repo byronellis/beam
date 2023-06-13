@@ -6,8 +6,8 @@ import re
 import yaml
 
 
-import markdown
-from markdown.core import Markdown
+from markdown.core import Markdown, Extension
+from markdown.preprocessors import Preprocessor
 from markdown.extensions.attr_list import get_attrs
 from markdown.extensions.codehilite import parse_hl_lines
 
@@ -28,8 +28,25 @@ class Links:
             ndx = len(self.links)
             self.links.append(ref)
             return "input{}".format(ndx)
+    
+    def input(self):
+        if len(self.links) > 0:
+            return self.links[0]
+        else:
+            None
+    
+    def inputs(self):
+        LOG.debug("{} Links for input: {} ".format(len(self.links),self.links))
+        if len(self.links) > 0:
+            inputs = dict()
+            for i in range(len(self.links)):
+                LOG.debug("LINK {}".format(i))
+                inputs["input{}".format(i)] = self.links[i]
+            return inputs
+        else:
+            return None
 
-class PipelineExtension(markdown.Extension):
+class PipelineExtension(Extension):
     """ Pipeline extension"""
 
     def __init__(self,**kwargs):
@@ -58,7 +75,8 @@ class PipelineExtension(markdown.Extension):
             'lang': lang,
             'classes': classes,
             'config': config,
-            'original_text': original_text
+            'original_text': original_text,
+            'final_text': None
         })
 
     def chunk(self,id = None,index = None):
@@ -70,7 +88,7 @@ class PipelineExtension(markdown.Extension):
 
 
 
-class PipelineExtractor(markdown.preprocessors.Preprocessor):
+class PipelineExtractor(Preprocessor):
     """ Extract pipelines from the code block elements """
 
     TEMPLATE_MACROS="""
@@ -94,7 +112,6 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
         self.pipeline = pipeline
 
     def run(self,lines):
-        self.md.pipelines = []
         text = "\n".join(lines)
 
         #Tokenize our pipeline components
@@ -136,13 +153,17 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
                 id = "chunk{}".format(chunk_count+1)
             
             #Convert inputs and outputs
-            config['inputs'] = Links(config.get('inputs',[]))
+            if config.get('inputs') is not None:
+                LOG.debug("INPUTS: {}".format(config['inputs']))
+                config['inputs'] = Links(config['inputs'].split(","))
+            else:
+                config['inputs'] = Links([])
 
             self.pipeline.add_chunk(id,lang,classes,config,token[1])
             ids.append(id)
             chunk_count = chunk_count + 1
 
-        # Now assemble pipelines from these chunks
+        # Now pass over each chunk to resolve any macros
         for chunk_id in ids:
             chunk = self.pipeline.chunk(chunk_id)
             template_text = "{}{}".format(self.TEMPLATE_MACROS,chunk['original_text'])
@@ -152,18 +173,71 @@ class PipelineExtractor(markdown.preprocessors.Preprocessor):
                 lang=chunk['lang'],
                 config=chunk['config'],
                 args={})
-            LOG.debug("output text {}".format(final_text))
+            chunk['final_text'] = final_text
 
+        #Assemble YAML and final_markdown
+        lines = []
+        transforms = []
+        source = None
+        sink = None
+        for i in range(len(ids)):
+            chunk = self.pipeline.chunk(ids[i])
+            id, lang, classes, code, config = ids[i],chunk['lang'], chunk['classes'], chunk['final_text'], chunk['config']
+            lines.append("{}```{}{}\n```\n".format(
+                tokens[i][0],
+                chunk['lang'],
+                chunk['final_text']
+            ))
+            transform = None
+            
+            if lang == 'yaml':
+                transform = yaml.safe_load(code)
+                transform['name'] = id
+                input = config['inputs'].input()
+                if input is not None:
+                    transform['input'] = input
+            elif lang == 'sql':
+                transform = {'type':'Sql','query':code,'name':id}
+                inputs = config['inputs'].inputs()
+                if inputs is not None:
+                    transform['inputs'] = inputs
+            elif lang == 'python':
+                type = "PyFn"
+                if "filter" in classes:                    
+                    transform = {'type':'PyFilter','keep':code}
+                    input = config['inputs'].input()
+                    if input is not None:
+                        transform['input'] = input
+                else:
+                    LOG.warn("General python functions not yet implemented")
 
+            else:
+                LOG.warn("No YAML output available for language {}".format(lang))
+            if transform is not None:
+                if "source" in classes:
+                    source = transform
+                elif "sink" in classes:
+                    sink = transform
+                else:
+                    transforms.append(transform)
+        pipeline = dict()
+        if source is not None:
+            pipeline['source'] = source
+        if sink is not None:
+            pipeline['sink'] = sink
+        if len(transforms) > 0:
+            pipeline['transforms'] = transforms
+        self.md.pipeline = pipeline 
 
-        # TODO: Replace with post-processed output to allow further correct processing
-        return lines
+        # Cue music...
+        self.md.final_markdown = "".join(lines)
+        return self.md.final_markdown.split("\n")
 
 
 
 class Beamdown:
     def __init__(self):
-        self.md = markdown.Markdown(extensions=['extra',PipelineExtension()])
+        self.md = Markdown(extensions=['extra',PipelineExtension()])
     
     def convert(self,text):
         return self.md.convert(text)
@@ -171,8 +245,11 @@ class Beamdown:
     def reset(self):
         self.md.reset()
 
-    def pipelines(self):
-        return self.md.pipelines
+    def final_markdown(self):
+        return self.md.final_markdown
+    
+    def pipeline(self):
+        return {'pipeline':self.md.pipeline}
     
 
 _beamdown = Beamdown()
@@ -183,5 +260,6 @@ def convert(text):
 def reset():
     _beamdown.reset()
 
-def pipelines():
-    return _beamdown.pipelines()
+def final_markdown():
+    return _beamdown.final_markdown()
+
