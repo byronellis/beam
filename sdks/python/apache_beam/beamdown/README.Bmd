@@ -1,3 +1,6 @@
+---
+providers:
+---
 <!--
     Licensed to the Apache Software Foundation (ASF) under one
     or more contributor license agreements.  See the NOTICE file
@@ -47,12 +50,13 @@ in Beamdown (though you can add even more block types with a planned plugin
 functionality). The first are Python blocks, which help to make writing Python
 more clear.
 
-```{.python .filter #my-first-filter}
-lambda x: x.col3 > 100
+```{.python .filter #my-first-filter inputs=csv-read}
+def myfilter(x): 
+    x.col3 > 100
 ```
 
 We can do the same thing with SQL!
-```{.sql #my-sql}
+```{.sql .noexecute #my-sql}
 SELECT col1, COUNT(*) AS cnt FROM {{ ref('my-first-filter') }} GROUP BY col1
 ```
 

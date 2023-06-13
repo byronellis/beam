@@ -45,6 +45,9 @@ class Links:
             return inputs
         else:
             return None
+        
+    def count(self):
+        return len(self.links)
 
 class PipelineExtension(Extension):
     """ Pipeline extension"""
@@ -69,9 +72,11 @@ class PipelineExtension(Extension):
         self.args = {}
 
     
-    def add_chunk(self,id,lang,classes,config,original_text):
+    def add_chunk(self,id,lang,classes,config,original_text,line_number):
         self.chunk_map[id] = len(self.chunks)
         self.chunks.append({
+            '__uuid__': 'beamdown_chunk_{}'.format(len(self.chunks)),
+            '__line__': line_number,
             'id': id,
             'lang': lang,
             'classes': classes,
@@ -117,10 +122,15 @@ class PipelineExtractor(Preprocessor):
 
         #Tokenize our pipeline components
         tokens = []
+        line_count = 1
         while 1:
             m = self.FENCED_BLOCK_RE.search(text)
+            #TODO Verify line counts
             if m:
-                tokens.append((text[:m.start()],m.group('code'),m.group('lang'),m.group('attrs'),m.group('hl_lines')))
+                prefix = text[:m.start()]
+                line_count = line_count + prefix.count("\n")
+                tokens.append((prefix,m.group('code'),m.group('lang'),m.group('attrs'),m.group('hl_lines'),line_count))
+                line_count = line_count + m.group('code').count("\n")
                 text = text[m.end():]
             else:
                 break
@@ -132,7 +142,7 @@ class PipelineExtractor(Preprocessor):
         # First we need to register all of our chunks
         for token in tokens:
             # This is the same parsing as the fenced output extension
-            lang, id, classes, config = None, '', [], {}
+            lang, id, classes, config, line_number = None, '', [], {}, 0
             if token[3]:
                 for k,v in get_attrs(token[3]):
                     if k == 'id':
@@ -160,7 +170,7 @@ class PipelineExtractor(Preprocessor):
             else:
                 config['inputs'] = Links([])
 
-            self.pipeline.add_chunk(id,lang,classes,config,token[1])
+            self.pipeline.add_chunk(id,lang,classes,config,token[1],token[5])
             ids.append(id)
             chunk_count = chunk_count + 1
 
@@ -181,6 +191,7 @@ class PipelineExtractor(Preprocessor):
         transforms = []
         source = None
         sink = None
+        link_count = 0
         for i in range(len(ids)):
             chunk = self.pipeline.chunk(ids[i])
             id, lang, classes, code, config = ids[i],chunk['lang'], chunk['classes'], chunk['final_text'], chunk['config']
@@ -189,11 +200,15 @@ class PipelineExtractor(Preprocessor):
                 chunk['lang'],
                 chunk['final_text']
             ))
+
+            #If there is a noexecute class we should not add it to the YAML
+            if "noexecute" in classes:
+                continue
+
             transform = None
             
             if lang == 'yaml':
                 transform = yaml.safe_load(code)
-                transform['name'] = id
                 input = config['inputs'].input()
                 if input is not None:
                     transform['input'] = input
@@ -215,6 +230,10 @@ class PipelineExtractor(Preprocessor):
             else:
                 LOG.warn("No YAML output available for language {}".format(lang))
             if transform is not None:
+                transform['__uuid__'] = chunk['__uuid__']
+                transform['__line__'] = chunk['__line__']
+                if 'name' not in transform:
+                    transform['name'] = id
                 if "source" in classes:
                     source = transform
                 elif "sink" in classes:
