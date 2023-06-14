@@ -95,7 +95,7 @@ class PipelineExtractor(Preprocessor):
             if 'input' in transform:
                 input = transform['input']
                 if type(input) is list:
-                    lines.extend(["  {}->{};".format(x,transform['name']) for x in input])
+                    lines.extend(["  {}-->{};".format(x,transform['name']) for x in input])
                 elif type(input) is dict:
                     lines.extend(["  {}-->{};".format(x,transform['name']) for x in input.values()])
                 else:

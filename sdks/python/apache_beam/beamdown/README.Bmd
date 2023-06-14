@@ -1,6 +1,3 @@
----
-providers:
----
 <!--
     Licensed to the Apache Software Foundation (ASF) under one
     or more contributor license agreements.  See the NOTICE file
@@ -41,15 +38,21 @@ Here's the graph we are going to make
 {{ graph('mermaid') }}
 ```
 
+We start reading CSV data from the ```input_files``` parameter.
 
 ```{.yaml .source #csv-read}
 type: ReadFromCsv
 path: {{ args.input_files }}
 ```
+
+We are eventually going to write them as JSON specified by ```output_path```. Note that the inputs are defined in the block definition.
+
 ```{.yaml .sink #json-write inputs=my-first-filter}
 type: WriteToJson
 path: {{ args.output_path }}
 ```
+
+In this example we are using the YAML specification to handle the inputs (in this case an array of input names).
 
 ```{.yaml #flatten-test}
 type: Flatten
