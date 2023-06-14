@@ -36,6 +36,12 @@ Using the same example as YAML's README.md we define two blocks to read and
 write. Note that we also have access to the Jinja macro language inside of our
 Markdown file, which lets us parameterize our documents easily!
 
+Here's the graph we are going to make
+```mermaid
+{{ graph('mermaid') }}
+```
+
+
 ```{.yaml .source #csv-read}
 type: ReadFromCsv
 path: {{ args.input_files }}
@@ -43,6 +49,11 @@ path: {{ args.input_files }}
 ```{.yaml .sink #json-write inputs=my-first-filter}
 type: WriteToJson
 path: {{ args.output_path }}
+```
+
+```{.yaml #flatten-test}
+type: Flatten
+input: [csv-read,my-first-filter]
 ```
 
 To make writing code a little easier, we also define two other types of blocks
@@ -56,7 +67,8 @@ def myfilter(x):
 ```
 
 We can do the same thing with SQL!
-```{.sql .noexecute #my-sql}
+```{.sql #my-sql}
 SELECT col1, COUNT(*) AS cnt FROM {{ ref('my-first-filter') }} GROUP BY col1
 ```
 
+Make sure we have some extras....

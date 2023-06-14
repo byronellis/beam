@@ -16,13 +16,20 @@ class Links:
             self.links.append(ref)
             return "input{}".format(ndx)
     
-    def input(self):
+    def get_input(self):
         if len(self.links) > 0:
             return self.links[0]
         else:
             None
     
-    def inputs(self):
+    input = property(get_input)
+
+    def get_inputs(self):
+        return self.links
+    
+    inputs = property(get_inputs)
+
+    def get_namedinputs(self):
         LOG.debug("{} Links for input: {} ".format(len(self.links),self.links))
         if len(self.links) > 0:
             inputs = dict()
@@ -33,5 +40,4 @@ class Links:
         else:
             return None
         
-    def count(self):
-        return len(self.links)
+    namedinputs = property(get_namedinputs)

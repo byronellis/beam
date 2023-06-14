@@ -14,7 +14,7 @@ def _parse_cmdline(argv):
   parser = argparse.ArgumentParser()
   parser.add_argument('infile',nargs='?',type=argparse.FileType('r'),default=sys.stdin,help="Beamdown file to process")
   parser.add_argument('outfile',nargs='?',type=argparse.FileType('w'),default=sys.stdout,help="Output file in either markdown or yaml depend on the mode.")
-  parser.add_argument('--mode',choices=['yaml','markdown'],default='yaml')
+  parser.add_argument('--mode',choices=['yaml','markdown','md'],default='yaml')
   parser.add_argument('--execute',action="store_true",help="Submit the pipeline spec for execution")
   parser.add_argument('--param',nargs='*',action="append",help="Arguments to pass to the Beamdown processor")
   return parser.parse_known_args(argv)
@@ -25,7 +25,7 @@ def _double_quote_handler(scanner,text):
 
 def _single_quote_handler(scanner,text):
   key,value = text.split('=',1)
-  return key, value.string("'")
+  return key, value.strip("'")
 
 def _no_quote_handler(scanner,text):
   return text.split('=',1)
@@ -59,7 +59,7 @@ def run(argv=None):
 
   beamdown = Beamdown()
   beamdown.convert(content,args)
-  if known_args.mode == "markdown":
+  if known_args.mode == "markdown" or known_args.mode == "md":
     known_args.outfile.write(beamdown.final_markdown())
   elif known_args.mode == "yaml":
     known_args.outfile.write(yaml.dump(beamdown.pipeline()))

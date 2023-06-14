@@ -5,6 +5,7 @@ import yaml
 
 from markdown.core import Markdown, Extension
 from markdown.preprocessors import Preprocessor
+from markdown.postprocessors import Postprocessor
 from markdown.extensions.attr_list import get_attrs
 from markdown.extensions.codehilite import parse_hl_lines
 
@@ -27,6 +28,7 @@ class PipelineExtension(Extension):
         md.preprocessors.register(PipelineExtractor(md,self),'pipeline',40)
         md.registerExtension(self)
 
+        LOG.debug("PREPROCESSORS")
         for preprocessor in md.preprocessors:
             LOG.debug("{}".format(preprocessor))
 
@@ -56,24 +58,57 @@ class PipelineExtension(Extension):
         else:
             return self.chunk[index]
 
+FENCED_BLOCK_RE = re.compile(dedent(r'''
+(?P<fence>^(?:~{3,}|`{3,}))[ ]*                          # opening fence
+((\{(?P<attrs>[^\}\n]*)\})|                              # (optional {attrs} or
+(\.?(?P<lang>[\w#.+-]*)[ ]*)?                            # optional (.)lang
+(hl_lines=(?P<quot>"|')(?P<hl_lines>.*?)(?P=quot)[ ]*)?) # optional hl_lines)
+\n                                                       # newline (end of opening fence)
+(?P<code>.*?)(?<=\n)                                     # the code block
+(?P=fence)[ ]*$                                          # closing fence
+'''),re.MULTILINE | re.DOTALL | re.VERBOSE)
+
+
 class PipelineExtractor(Preprocessor):
     """ Extract pipelines from the code block elements """
 
     TEMPLATE_MACROS="""
 {% macro ref(chunk_id) -%}
 {{ config.inputs.link(chunk_id) }}
-{%- endmacro %}"""
+{%- endmacro %}
+{% macro graph(type) -%}
+{% raw %}{{ graph('{% endraw %}{{type}}{% raw %}') }}{% endraw %}
+{%- endmacro %}
+"""
 
+    POST_PROCESS_TEMPLATE_MACROS="""
+{% macro graph(type) -%}
+{{ _graph(type) }}
+{%- endmacro %}
+"""
 
-    FENCED_BLOCK_RE = re.compile(dedent(r'''
-    (?P<fence>^(?:~{3,}|`{3,}))[ ]*                          # opening fence
-    ((\{(?P<attrs>[^\}\n]*)\})|                              # (optional {attrs} or
-    (\.?(?P<lang>[\w#.+-]*)[ ]*)?                            # optional (.)lang
-    (hl_lines=(?P<quot>"|')(?P<hl_lines>.*?)(?P=quot)[ ]*)?) # optional hl_lines)
-    \n                                                       # newline (end of opening fence)
-    (?P<code>.*?)(?<=\n)                                     # the code block
-    (?P=fence)[ ]*$                                          # closing fence
-    '''),re.MULTILINE | re.DOTALL | re.VERBOSE)
+    def render_graph_mermaid(self,source,sink,transforms):
+        lines = ["graph TD;"]
+        for transform in [source,sink] + transforms:
+            if transform is None:
+                continue
+            if 'input' in transform:
+                input = transform['input']
+                if type(input) is list:
+                    lines.extend(["  {}->{};".format(x,transform['name']) for x in input])
+                elif type(input) is dict:
+                    lines.extend(["  {}-->{};".format(x,transform['name']) for x in input.values()])
+                else:
+                    lines.append("  {}-->{};".format(input,transform['name']))
+        return "\n".join(lines)
+    
+
+    def render_graph(self,type,source,sink,transforms):
+        if type == "mermaid":
+            return self.render_graph_mermaid(source,sink,transforms)
+        else:
+            return "'{}' Not Found".format(type)
+
 
     def __init__(self, md, pipeline):
         super().__init__(md)        
@@ -86,7 +121,7 @@ class PipelineExtractor(Preprocessor):
         tokens = []
         line_count = 1
         while 1:
-            m = self.FENCED_BLOCK_RE.search(text)
+            m = FENCED_BLOCK_RE.search(text)
             #TODO Verify line counts
             if m:
                 prefix = text[:m.start()]
@@ -146,7 +181,7 @@ class PipelineExtractor(Preprocessor):
                 lang=chunk['lang'],
                 config=chunk['config'],
                 args=self.pipeline.args)
-            chunk['final_text'] = final_text
+            chunk['final_text'] = final_text.strip("\n")
 
         #Assemble YAML and final_markdown
         lines = []
@@ -157,7 +192,7 @@ class PipelineExtractor(Preprocessor):
         for i in range(len(ids)):
             chunk = self.pipeline.chunk(ids[i])
             id, lang, classes, code, config = ids[i],chunk['lang'], chunk['classes'], chunk['final_text'], chunk['config']
-            lines.append("{}```{}{}\n```\n".format(
+            lines.append("{}```{}\n{}\n```\n".format(
                 tokens[i][0],
                 chunk['lang'],
                 chunk['final_text']
@@ -171,19 +206,24 @@ class PipelineExtractor(Preprocessor):
             
             if lang == 'yaml':
                 transform = yaml.safe_load(code)
-                input = config['inputs'].input()
+                input = config['inputs'].input
                 if input is not None:
                     transform['input'] = input
             elif lang == 'sql':
                 transform = {'type':'Sql','query':code,'name':id}
-                inputs = config['inputs'].inputs()
+                inputs = config['inputs'].namedinputs
                 if inputs is not None:
-                    transform['inputs'] = inputs
+                    transform['input'] = inputs
             elif lang == 'python':
                 type = "PyFn"
                 if "filter" in classes:                    
                     transform = {'type':'PyFilter','keep':code}
-                    input = config['inputs'].input()
+                    input = config['inputs'].input
+                    if input is not None:
+                        transform['input'] = input
+                elif "map" in classes:
+                    transform = {'type':'PyMap','fn':code}
+                    input = config['inputs'].input
                     if input is not None:
                         transform['input'] = input
                 else:
@@ -211,7 +251,13 @@ class PipelineExtractor(Preprocessor):
             pipeline['transforms'] = transforms
         self.md.pipeline = pipeline 
 
+        #Make sure we add any trailing text
+        lines.append(text)
         # Cue music...
-        self.md.final_markdown = "".join(lines)
+
+        # Allow some final post processing for thingds like graph shape
+        template = Template("{}{}".format(self.POST_PROCESS_TEMPLATE_MACROS,"".join(lines)))
+        self.md.final_markdown = template.render(_graph=lambda x: self.render_graph(x,source,sink,transforms))
+
         return self.md.final_markdown.split("\n")
 
