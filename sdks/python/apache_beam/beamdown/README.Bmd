@@ -54,7 +54,7 @@ path: {{ args.output_path }}
 
 In this example we are using the YAML specification to handle the inputs (in this case an array of input names).
 
-```{.yaml #flatten-test}
+```{.yaml .noexecute #flatten-test}
 type: Flatten
 input: [csv-read,my-first-filter]
 ```
@@ -65,12 +65,11 @@ functionality). The first are Python blocks, which help to make writing Python
 more clear.
 
 ```{.python .filter #my-first-filter inputs=csv-read}
-def myfilter(x): 
-    x.col3 > 100
+lambda x: x.col3 > 100
 ```
 
 We can do the same thing with SQL!
-```{.sql #my-sql}
+```{.sql .noexecute #my-sql}
 SELECT col1, COUNT(*) AS cnt FROM {{ ref('my-first-filter') }} GROUP BY col1
 ```
 
