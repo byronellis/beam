@@ -554,6 +554,9 @@ class BeamModulePlugin implements Plugin<Project> {
     project.ext.allFlinkVersions = project.flink_versions.split(',')
     project.ext.latestFlinkVersion = project.ext.allFlinkVersions.last()
 
+    project.ext.allFlink1Versions = project.ext.allFlinkVersions.findAll { ((String)it).startsWith("1") }
+    project.ext.allFlink2Versions = project.ext.allFlinkVersions.findAll { ((String)it).startsWith("2") }
+
     project.ext.nativeArchitecture = {
       // Best guess as to this system's normalized native architecture name.
       System.getProperty('os.arch') == 'aarch64' || System.getProperty('os.arch').contains('arm') ? "arm64" : "amd64"

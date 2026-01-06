@@ -88,7 +88,7 @@ dependencies {
         delegate.add(runner + "PreCommit", project(path: ":examples:java:cdap:hubspot", configuration: "testRuntimeMigration"))
     }
     directRunnerPreCommit project(path: ":runners:direct-java", configuration: "shadow")
-    flinkRunnerPreCommit project(":runners:flink:${project.ext.latestFlinkVersion}")
+    flinkRunnerPreCommit project(":runners:flink:${project.ext.latestFlinkVersion[0]}:${project.ext.latestFlinkVersion}")
 }
 
 /*

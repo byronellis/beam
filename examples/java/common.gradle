@@ -38,7 +38,7 @@ configurations.sparkRunnerPreCommit {
 
 dependencies {
   directRunnerPreCommit project(path: ":runners:direct-java", configuration: "shadow")
-  flinkRunnerPreCommit project(":runners:flink:${project.ext.latestFlinkVersion}")
+  flinkRunnerPreCommit project(":runners:flink:${project.ext.latestFlinkVersion[0]}:${project.ext.latestFlinkVersion}")
   sparkRunnerPreCommit project(":runners:spark:3")
   sparkRunnerPreCommit project(":sdks:java:io:hadoop-file-system")
   dataflowRunnerPreCommit project(":runners:google-cloud-dataflow-java")

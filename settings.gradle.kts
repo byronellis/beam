@@ -129,9 +129,9 @@ include(":runners:extensions-java:metrics")
  */
 val flink_versions: String by settings
 for (version in flink_versions.split(',')) {
-    include(":runners:flink:${version}")
-    include(":runners:flink:${version}:job-server")
-    include(":runners:flink:${version}:job-server-container")
+    include(":runners:flink:${version[0]}:${version}")
+    include(":runners:flink:${version[0]}:${version}:job-server")
+    include(":runners:flink:${version[0]}:${version}:job-server-container")
 }
 /* End Flink Runner related settings */
 include(":runners:twister2")

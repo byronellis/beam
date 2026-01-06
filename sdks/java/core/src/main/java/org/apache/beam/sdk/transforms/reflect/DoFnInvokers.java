@@ -17,6 +17,7 @@
  */
 package org.apache.beam.sdk.transforms.reflect;
 
+import java.util.Optional;
 import org.apache.beam.sdk.annotations.Internal;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -24,6 +25,18 @@ import org.apache.beam.sdk.transforms.DoFn;
 /** Static utilities for working with {@link DoFnInvoker}. */
 @Internal
 public class DoFnInvokers {
+
+  private static final DoFnInvokerFactory INSTANCE;
+  static {
+    String doFnInvokerFactoryClassName = Optional.of(System.getProperty("beam.sdk.transforms.reflect.DoFnInvokerFactory"))
+      .orElse("org.apache.beam.sdk.transforms.reflect.ByteBuddyDoFnInvokerFactory");
+    try {
+      Class<?> doFnInvokerFactory = Class.forName(doFnInvokerFactoryClassName);
+      INSTANCE = (DoFnInvokerFactory) doFnInvokerFactory.getMethod("only").invoke(null);
+    } catch(Exception e) {
+      throw new RuntimeException("Unable to determine which DoFnInvokerFactory is available", e);
+    }
+  }
 
   /**
    * Returns an {@link DoFnInvoker} for the given {@link DoFn}, using a default choice of {@link

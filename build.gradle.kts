@@ -265,10 +265,15 @@ tasks.register("javaPreCommit") {
   dependsOn(":runners:direct-java:build")
   dependsOn(":runners:direct-java:needsRunnerTests")
   dependsOn(":runners:extensions-java:metrics:build")
-  // lowest supported flink version
-  var flinkVersions = project.ext.get("allFlinkVersions") as Array<*>
-  dependsOn(":runners:flink:${flinkVersions[0]}:build")
-  dependsOn(":runners:flink:${flinkVersions[0]}:job-server:build")
+  // lowest supported flink 1 version
+  var flink1Versions = project.ext.get("allFlink1Versions") as Array<*>
+  dependsOn(":runners:flink:1:${flink1Versions[0]}:build")
+  dependsOn(":runners:flink:1:${flink1Versions[0]}:job-server:build")
+  // lowest supported flink 2 version
+  var flink2Versions = project.ext.get("allFlink2Versions") as Array<*>
+  dependsOn(":runners:flink:2:${flink2Versions[0]}:build")
+  dependsOn(":runners:flink:2:${flink2Versions[0]}:job-server:build")
+
   dependsOn(":runners:google-cloud-dataflow-java:build")
   dependsOn(":runners:google-cloud-dataflow-java:examples-streaming:build")
   dependsOn(":runners:google-cloud-dataflow-java:examples:build")
@@ -376,11 +381,17 @@ tasks.register("javaioPreCommit") {
 // a precommit task testing additional supported flink versions not covered by
 // the main Java PreCommit (lowest supported version)
 tasks.register("flinkPreCommit") {
-  var flinkVersions = project.ext.get("allFlinkVersions") as Array<*>
-  for (version in flinkVersions.slice(1..flinkVersions.size - 1)) {
-    dependsOn(":runners:flink:${version}:build")
-    dependsOn(":runners:flink:${version}:job-server:build")
+  var flink1Versions = project.ext.get("allFlink1Versions") as Array<*>
+  for (version in flink1Versions.slice(1..flink1Versions.size - 1)) {
+    dependsOn(":runners:flink:1:${version}:build")
+    dependsOn(":runners:flink:1:${version}:job-server:build")
   }
+  var flink2Versions = project.ext.get("allFlink2Versions") as Array<*>
+  for (version in flink2Versions.slice(1..flink1Versions.size - 1)) {
+    dependsOn(":runners:flink:2:${version}:build")
+    dependsOn(":runners:flink:2:${version}:job-server:build")
+  }
+
 }
 
 tasks.register("sqlPreCommit") {
@@ -409,8 +420,8 @@ tasks.register("javaPostCommit") {
 
 tasks.register("javaPostCommitSickbay") {
   dependsOn(":runners:samza:validatesRunnerSickbay")
-  for (version in project.ext.get("allFlinkVersions") as Array<*>) {
-    dependsOn(":runners:flink:${version}:validatesRunnerSickbay")
+  for (version in project.ext.get("allFlinkVersions") as Array<String>) {
+    dependsOn(":runners:flink:${version[0]}:${version}:validatesRunnerSickbay")
   }
   dependsOn(":runners:spark:3:job-server:validatesRunnerSickbay")
   dependsOn(":runners:direct-java:validatesRunnerSickbay")
@@ -863,9 +874,8 @@ tasks.register("typescriptPreCommit") {
 tasks.register("pushAllRunnersDockerImages") {
   dependsOn(":runners:spark:3:job-server:container:docker")
   for (version in project.ext.get("allFlinkVersions") as Array<*>) {
-    dependsOn(":runners:flink:${version}:job-server-container:docker")
+    dependsOn(":runners:flink:${version.toString()[0]}:${version}:job-server-container:docker")
   }
-
   doLast {
     if (project.hasProperty("prune-images")) {
       exec {

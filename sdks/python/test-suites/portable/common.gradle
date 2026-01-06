@@ -508,7 +508,7 @@ def addTestJavaJarCreator(String runner, Task jobServerJarTask) {
 }
 
 // TODO(BEAM-11333) Update and test multiple Flink versions.
-addTestJavaJarCreator("FlinkRunner", tasks.getByPath(":runners:flink:${latestFlinkVersion}:job-server:shadowJar"))
+addTestJavaJarCreator("FlinkRunner", tasks.getByPath(":runners:flink:${project.ext.latestFlinkVersion[0]}:${latestFlinkVersion}:job-server:shadowJar"))
 addTestJavaJarCreator("SparkRunner", tasks.getByPath(":runners:spark:3:job-server:shadowJar"))
 
 def addTestFlinkUberJar(boolean saveMainSession) {

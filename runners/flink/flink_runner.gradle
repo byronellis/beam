@@ -119,7 +119,7 @@ def sourceBase = "${project.projectDir}/../src"
 sourceSets {
   main {
     java {
-      srcDirs = ["${sourceBase}/main/java", "${sourceOverridesBase}/main/java"]
+      srcDirs = ["${sourceBase}/main/java",  "${sourceOverridesBase}/main/java"]
     }
     resources {
       srcDirs = ["${sourceBase}/main/resources", "${sourceOverridesBase}/main/resources"]
@@ -169,6 +169,7 @@ dependencies {
   implementation project(":runners:core-java")
   implementation project(":runners:java-fn-execution")
   implementation project(":runners:java-job-service")
+  implementation project(":runners:flink")
   implementation project(":sdks:java:extensions:google-cloud-platform-core")
   implementation library.java.vendored_grpc_1_69_0
   implementation library.java.slf4j_api
@@ -196,7 +197,12 @@ dependencies {
 
   implementation "org.apache.flink:flink-core:$flink_version"
   implementation "org.apache.flink:flink-metrics-core:$flink_version"
-  implementation "org.apache.flink:flink-java:$flink_version"
+
+  if(flink_major.startsWith("2")) {
+    implementation "org.apache.flink:flink-streaming-java:$flink_version"
+  } else {
+    implementation "org.apache.flink:flink-java:$flink_version"
+  }
 
   implementation "org.apache.flink:flink-runtime:$flink_version"
   implementation "org.apache.flink:flink-metrics-core:$flink_version"

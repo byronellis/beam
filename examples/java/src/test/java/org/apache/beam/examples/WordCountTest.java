@@ -17,8 +17,10 @@
  */
 package org.apache.beam.examples;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.apache.beam.examples.WordCount.CountWords;
 import org.apache.beam.examples.WordCount.ExtractWordsFn;
 import org.apache.beam.examples.WordCount.FormatAsTextFn;
@@ -27,6 +29,7 @@ import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
@@ -72,5 +75,25 @@ public class WordCountTest {
 
     PAssert.that(output).containsInAnyOrder(COUNTS_ARRAY);
     p.run().waitUntilFinish();
+  }
+
+  @Test
+  public void testReusedLambda() {
+    p.apply(Create.of(new SimpleElement1()))
+        .apply("First", Filter.by(Objects::nonNull))
+        .apply(ParDo.of(new VerySimpleDoFn<>()))
+        .apply("Second", Filter.by(Objects::nonNull));
+    p.run().waitUntilFinish();
+  }
+
+  static class SimpleElement1 implements Serializable {}
+
+  static class SimpleElement2 implements Serializable {}
+
+  static class VerySimpleDoFn<I> extends DoFn<I, SimpleElement2> {
+    @ProcessElement
+    public void processElement(ProcessContext c) {
+      c.output(new SimpleElement2());
+    }
   }
 }
